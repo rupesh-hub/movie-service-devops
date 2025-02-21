@@ -1,11 +1,14 @@
 import { Link } from "react-router-dom";
 
 export default function MovieCard({ movie }) {
+
+  console.log(movie?.thumbnail?.path)
+
   return (
     <Link to="/details">
       <div className="movie-card w-40 relative group cursor-pointer">
         <img
-          src={movie.image}
+          src={movie?.thumbnail?.path}
           alt={movie.title}
           className="h-60 w-40 rounded-lg object-cover"
         />

@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import MovieDetails from "./pages/MovieDetails";
 import Notifications from "./pages/Notifications";
+import PostMovie from "./pages/PostMovie";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/home" element={<Navigate to="/" replace/>} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/post-movie" element={<PostMovie />} />
           <Route path="*" element={<Error />} />
         </Routes>
       </main>
