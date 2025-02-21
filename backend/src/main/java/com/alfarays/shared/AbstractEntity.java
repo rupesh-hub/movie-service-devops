@@ -23,7 +23,7 @@ public abstract class AbstractEntity {
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdOn;
 
     @CreatedBy
     @Column(name = "created_by", nullable = false, updatable = false)
@@ -31,21 +31,13 @@ public abstract class AbstractEntity {
 
     @LastModifiedDate
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private LocalDateTime modifiedOn;
 
     @LastModifiedBy
     @Column(name = "updated_by")
-    private String updatedBy;
+    private String modifiedBy;
 
     @Column(name = "enabled", nullable = false)
     private Boolean enabled = true;
-
-    public void softDelete() {
-        this.enabled = false;
-    }
-
-    public void reactivate() {
-        this.enabled = true;
-    }
 
 }
