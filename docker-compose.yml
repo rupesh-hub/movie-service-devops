@@ -30,8 +30,7 @@ services:
     networks:
       - java-network
     depends_on:
-      mysql:
-        condition: service_healthy
+      - mysql
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8181/api/v1.0.0/actuator/health"]
       interval: 10s
@@ -43,13 +42,12 @@ services:
     container_name: frontend
     image: rupesh1997/frontend:1.0.0
     ports:
-      - "8080:80"
+      - "8082:80"
     restart: always
     networks:
       - java-network
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
 
 volumes:
   mysql-data:

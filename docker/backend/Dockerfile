@@ -17,7 +17,7 @@ COPY --from=build /build/target/movie-service-backend-*.jar /app/
 
 EXPOSE 8181
 
-ENV DB_URL=jdbc:mysql://mysql:3306/product_db
+ENV DB_URL=jdbc:mysql://mysql:3306/movie_db
 ENV ACTIVE_PROFILE=${PROFILE}
 ENV JAR_VERSION=${APP_VERSION}
 
