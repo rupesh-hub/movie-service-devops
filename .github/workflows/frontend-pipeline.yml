@@ -9,6 +9,10 @@ on:
       - docker-compose.yml
       - .github/workflows/frontend-*.yml
 
+env:
+  DEPLOY_FOLDER: ci-cd
+  COMPOSE_FILE: docker-compose.yml
+
 jobs:
   build-image:
     runs-on: self-hosted
@@ -56,18 +60,19 @@ jobs:
           ssh-private-key: ${{ secrets.AZURE_SECRET_KEY }}
 
       - name: Create deployment folder
-        run: ssh -o StrictHostKeyChecking=no ${{ secrets.AZURE_USERNAME }}@${{ secrets.AZURE_IP }} "mkdir -p ci-cd"
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.AZURE_USERNAME }}@${{ secrets.AZURE_IP }} \
+            "mkdir -p ${{ env.DEPLOY_FOLDER }}"
 
       - name: Copy compose file
-        run: scp docker-compose.yml ${{ secrets.AZURE_USERNAME }}@${{ secrets.AZURE_IP }}:ci-cd/docker-compose.yml
+        run: |
+          scp ${{ env.COMPOSE_FILE }} \
+            ${{ secrets.AZURE_USERNAME }}@${{ secrets.AZURE_IP }}:${{ env.DEPLOY_FOLDER }}/${{ env.COMPOSE_FILE }}
 
       - name: Set ENV variable and deploy
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.AZURE_USERNAME }}@${{ secrets.AZURE_IP }} <<EOF
-            cd ci-cd
-            docker-compose -f docker-compose.yml pull -q
-            docker-compose -f docker-compose.yml up -d
+            cd ${{ env.DEPLOY_FOLDER }}
+            docker-compose -f ${{ env.COMPOSE_FILE }} pull -q
+            docker-compose -f ${{ env.COMPOSE_FILE }} up -d
           EOF
-
-# sudo apt-get install docker.io
-# sudo usermod -aG docker $USER && newgrp docker

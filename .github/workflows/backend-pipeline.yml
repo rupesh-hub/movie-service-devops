@@ -9,6 +9,10 @@ on:
       - docker-compose.yml
       - .github/workflows/backend-*.yml
 
+env:
+  JAVA_VERSION: 17
+  DISTRIBUTION: 'corretto'
+
 jobs:
   compile:
     runs-on: self-hosted
@@ -22,8 +26,16 @@ jobs:
       - name: Setup java environment
         uses: actions/setup-java@v4
         with:
-          java-version: 17
-          distribution: 'corretto'
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.DISTRIBUTION }}
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: maven-${{ hashFiles('backend/pom.xml') }}
+          restore-keys: |
+            maven-
 
       - name: Compile project
         run: |
@@ -42,18 +54,18 @@ jobs:
       - name: Setup java environment
         uses: actions/setup-java@v4
         with:
-          java-version: 17
-          distribution: 'corretto'
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.DISTRIBUTION }}
 
       - name: Running unit tests
         run: |
           cd backend
           ./mvnw clean test
 
-  build:
+  build-and-push-image:
     runs-on: self-hosted
     needs: [ compile, tests ]
-    name: Build
+    name: Build and Push Docker Image
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -63,29 +75,8 @@ jobs:
       - name: Setup java environment
         uses: actions/setup-java@v4
         with:
-          java-version: 17
-          distribution: 'corretto'
-
-      - name: Build project
-        run: |
-          cd backend
-          ./mvnw clean package
-
-  build-image:
-    runs-on: self-hosted
-    needs: [ build ]
-    name: Build docker Image
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup java environment
-        uses: actions/setup-java@v4
-        with:
-          java-version: 17
-          distribution: 'corretto'
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.DISTRIBUTION }}
 
       - name: Build project
         run: |
@@ -123,7 +114,7 @@ jobs:
 
   deploy:
     runs-on: self-hosted
-    needs: [ build-image ]
+    needs: [ build-and-push-image ]
     name: Deploy to cloud
     steps:
       - name: Add ssh key
@@ -144,7 +135,3 @@ jobs:
             docker-compose -f docker-compose.yml pull -q
             docker-compose -f docker-compose.yml up -d
           EOF
-          
-
-#  sudo usermod -aG docker $USER
-#  newgrp docker
