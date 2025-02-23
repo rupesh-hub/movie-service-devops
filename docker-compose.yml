@@ -1,7 +1,6 @@
 version: "3.8"
 
 services:
-
   mysql:
     container_name: mysql
     image: mysql:8.0
@@ -22,7 +21,38 @@ services:
       retries: 5
       start_period: 60s
 
+  backend:
+    container_name: backend
+    image: rupesh1997/backend:1.0.0
+    ports:
+      - "8181:8181"
+    restart: always
+    networks:
+      - java-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8181/api/v1.0.0/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  frontend:
+    container_name: frontend
+    image: rupesh1997/frontend:1.0.0
+    ports:
+      - "8080:80"
+    restart: always
+    networks:
+      - java-network
+    depends_on:
+      backend:
+        condition: service_healthy
+
 volumes:
   mysql-data:
+
 networks:
   java-network:
