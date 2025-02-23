@@ -1,26 +1,40 @@
-FROM node:20 as build-stage
+# Stage 1: Build the application
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Copy package files
 COPY package*.json ./
-RUN npm install
 
+# Install dependencies (including dev dependencies)
+RUN npm ci
+
+# Copy source files
 COPY . .
-RUN npm run build --prod
 
+# Build the application
+RUN npm run build
+
+# Stage 2: Serve the application using Nginx
 FROM nginx:alpine
 
 # Copy custom Nginx configuration
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Remove the default configuration
-RUN rm /etc/nginx/conf.d/default.conf
+# Remove default Nginx static files
+RUN rm -rf /usr/share/nginx/html/*
 
-# Copy the Angular build output to the Nginx HTML directory
-COPY --from=build-stage /app/dist /usr/share/nginx/html
+# Copy built assets from builder
+COPY --from=builder /app/dist /usr/share/nginx/html
 
+# Expose port 80
 EXPOSE 80
 
-# cd frontend
-# docker build -t rupesh1997/movie-service-frontend:1.0.0 -f ../docker/frontend/Dockerfile .
-# docker run -d -p 8080:80 --name movie-service-frontend  rupesh1997/movie-service-frontend:1.0.0
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]
+
+# docker stop frontend && docker rm frontend
+# docker images
+# docker rmi -f <image-id>
+# docker build -t rupesh1997/frontend:1.0.0 -f Dockerfile .
+# docker run -d -p 8080:80 --name frontend rupesh1997/frontend:1.0.0
