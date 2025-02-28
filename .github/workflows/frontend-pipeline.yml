@@ -59,6 +59,16 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.AZURE_SECRET_KEY }}
 
+      - name: Debug Docker environment
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.AZURE_USERNAME }}@${{ secrets.AZURE_IP }} <<EOF
+            docker --version
+            docker-compose --version
+            docker images
+            docker ps -a
+            docker volume ls
+          EOF
+
       - name: Create deployment folder
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.AZURE_USERNAME }}@${{ secrets.AZURE_IP }} \
@@ -73,6 +83,7 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.AZURE_USERNAME }}@${{ secrets.AZURE_IP }} <<EOF
             cd ${{ env.DEPLOY_FOLDER }}
-            docker-compose -f ${{ env.COMPOSE_FILE }} pull -q
-            docker-compose -f ${{ env.COMPOSE_FILE }} up -d
+            docker-compose down
+            docker-compose pull -q
+            docker-compose up -d
           EOF

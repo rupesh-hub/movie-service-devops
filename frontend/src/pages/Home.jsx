@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import MovieCard from "../components/MovieCard";
 import {useState, useEffect} from "react";
-import axios from "axios";
+
 
 export default function Home() {
     const [movies, setMovies] = useState([]); // Initialize as an empty array
