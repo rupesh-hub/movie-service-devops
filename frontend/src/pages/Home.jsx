@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import MovieCard from "../components/MovieCard";
 import {useState, useEffect} from "react";
-
+import axios from "axios";
 
 export default function Home() {
     const [movies, setMovies] = useState([]); // Initialize as an empty array
@@ -166,7 +166,7 @@ export default function Home() {
             </div>
 
             {/* Add CSS for the scrollable container */}
-            <style jsx>{`
+            <style>{`
                 .scrollable-container {
                     overflow-x: auto;
                     white-space: nowrap;

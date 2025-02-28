@@ -13,6 +13,7 @@ FRONTEND_IMAGE="rupesh1997/frontend:1.0.0"
 FRONTEND_CONTAINER_NAME="frontend"
 BACKEND_CONTAINER_NAME="backend"
 NETWORK_NAME="devops"
+PORT_MAPPING="8888:80"
 
 # Function to log messages
 log_message() {
@@ -104,7 +105,7 @@ main() {
   build_docker_image "$FRONTEND_IMAGE" "../docker/frontend/Dockerfile"
 
   # Run Frontend container
-  run_docker_container "$FRONTEND_CONTAINER_NAME" "$FRONTEND_IMAGE" "8080:80" "$NETWORK_NAME"
+  run_docker_container "$FRONTEND_CONTAINER_NAME" "$FRONTEND_IMAGE" "$PORT_MAPPING" "$NETWORK_NAME"
 
   # Clean up unused Docker resources
   cleanup_unused_resources

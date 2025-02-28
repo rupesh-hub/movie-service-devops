@@ -42,7 +42,7 @@ services:
     container_name: frontend
     image: rupesh1997/frontend:1.0.0
     ports:
-      - "8082:80"
+      - "8888:80"
     restart: always
     networks:
       - java-network

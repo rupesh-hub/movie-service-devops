@@ -1,137 +1,137 @@
-name: BACKEND PIPELINE
-on:
-  push:
-    branches:
-      - main
-    paths:
-      - backend/**
-      - docker/backend/**
-      - docker-compose.yml
-      - .github/workflows/backend-*.yml
-
-env:
-  JAVA_VERSION: 17
-  DISTRIBUTION: 'corretto'
-
-jobs:
-  compile:
-    runs-on: self-hosted
-    name: Compile
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup java environment
-        uses: actions/setup-java@v4
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: ${{ env.DISTRIBUTION }}
-
-      - name: Cache Maven dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.m2/repository
-          key: maven-${{ hashFiles('backend/pom.xml') }}
-          restore-keys: |
-            maven-
-
-      - name: Compile project
-        run: |
-          cd backend
-          ./mvnw clean compile
-
-  tests:
-    runs-on: self-hosted
-    name: Test
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup java environment
-        uses: actions/setup-java@v4
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: ${{ env.DISTRIBUTION }}
-
-      - name: Running unit tests
-        run: |
-          cd backend
-          ./mvnw clean test
-
-  build-and-push-image:
-    runs-on: self-hosted
-    needs: [ compile, tests ]
-    name: Build and Push Docker Image
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup java environment
-        uses: actions/setup-java@v4
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: ${{ env.DISTRIBUTION }}
-
-      - name: Build project
-        run: |
-          cd backend
-          ./mvnw clean package
-
-      - name: Extract project version
-        id: extract_version
-        run: |
-          cd backend
-          echo "VERSION=$(./mvnw -q -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive exec:exec)" >> $GITHUB_OUTPUT
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Login to docker hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build and push docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: backend
-          file: docker/backend/Dockerfile
-          push: true
-          platforms: linux/amd64
-          tags: |
-            ${{ secrets.DOCKER_USERNAME }}/backend:${{ steps.extract_version.outputs.VERSION }}
-            ${{ secrets.DOCKER_USERNAME }}/backend:latest
-          build-args: |
-            PROFILE=dev
-            API_VERSION=${{ steps.extract_version.outputs.VERSION }}
-
-  deploy:
-    runs-on: self-hosted
-    needs: [ build-and-push-image ]
-    name: Deploy to cloud
-    steps:
-      - name: Add ssh key
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.AZURE_SECRET_KEY }}
-
-      - name: Create deployment folder
-        run: ssh -o StrictHostKeyChecking=no ${{ secrets.AZURE_USERNAME }}@${{ secrets.AZURE_IP }} "mkdir -p ci-cd"
-
-      - name: Copy compose file
-        run: scp docker-compose.yml ${{ secrets.AZURE_USERNAME }}@${{ secrets.AZURE_IP }}:ci-cd/docker-compose.yml
-
-      - name: Set ENV variable and deploy
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.AZURE_USERNAME }}@${{ secrets.AZURE_IP }} <<EOF
-            cd ci-cd
-            docker-compose -f docker-compose.yml pull -q
-            docker-compose -f docker-compose.yml up -d
-          EOF
+#name: BACKEND PIPELINE
+#on:
+#  push:
+#    branches:
+#      - main
+#    paths:
+#      - backend/**
+#      - docker/backend/**
+#      - docker-compose.yml
+#      - .github/workflows/backend-*.yml
+#
+#env:
+#  JAVA_VERSION: 17
+#  DISTRIBUTION: 'corretto'
+#
+#jobs:
+#  compile:
+#    runs-on: self-hosted
+#    name: Compile
+#    steps:
+#      - name: Checkout repository
+#        uses: actions/checkout@v4
+#        with:
+#          fetch-depth: 0
+#
+#      - name: Setup java environment
+#        uses: actions/setup-java@v4
+#        with:
+#          java-version: ${{ env.JAVA_VERSION }}
+#          distribution: ${{ env.DISTRIBUTION }}
+#
+#      - name: Cache Maven dependencies
+#        uses: actions/cache@v3
+#        with:
+#          path: ~/.m2/repository
+#          key: maven-${{ hashFiles('backend/pom.xml') }}
+#          restore-keys: |
+#            maven-
+#
+#      - name: Compile project
+#        run: |
+#          cd backend
+#          ./mvnw clean compile
+#
+#  tests:
+#    runs-on: self-hosted
+#    name: Test
+#    steps:
+#      - name: Checkout repository
+#        uses: actions/checkout@v4
+#        with:
+#          fetch-depth: 0
+#
+#      - name: Setup java environment
+#        uses: actions/setup-java@v4
+#        with:
+#          java-version: ${{ env.JAVA_VERSION }}
+#          distribution: ${{ env.DISTRIBUTION }}
+#
+#      - name: Running unit tests
+#        run: |
+#          cd backend
+#          ./mvnw clean test
+#
+#  build-and-push-image:
+#    runs-on: self-hosted
+#    needs: [ compile, tests ]
+#    name: Build and Push Docker Image
+#    steps:
+#      - name: Checkout repository
+#        uses: actions/checkout@v4
+#        with:
+#          fetch-depth: 0
+#
+#      - name: Setup java environment
+#        uses: actions/setup-java@v4
+#        with:
+#          java-version: ${{ env.JAVA_VERSION }}
+#          distribution: ${{ env.DISTRIBUTION }}
+#
+#      - name: Build project
+#        run: |
+#          cd backend
+#          ./mvnw clean package
+#
+#      - name: Extract project version
+#        id: extract_version
+#        run: |
+#          cd backend
+#          echo "VERSION=$(./mvnw -q -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive exec:exec)" >> $GITHUB_OUTPUT
+#
+#      - name: Set up Docker Buildx
+#        uses: docker/setup-buildx-action@v2
+#
+#      - name: Login to docker hub
+#        uses: docker/login-action@v3
+#        with:
+#          username: ${{ secrets.DOCKER_USERNAME }}
+#          password: ${{ secrets.DOCKER_PASSWORD }}
+#
+#      - name: Build and push docker image
+#        uses: docker/build-push-action@v5
+#        with:
+#          context: backend
+#          file: docker/backend/Dockerfile
+#          push: true
+#          platforms: linux/amd64
+#          tags: |
+#            ${{ secrets.DOCKER_USERNAME }}/backend:${{ steps.extract_version.outputs.VERSION }}
+#            ${{ secrets.DOCKER_USERNAME }}/backend:latest
+#          build-args: |
+#            PROFILE=dev
+#            API_VERSION=${{ steps.extract_version.outputs.VERSION }}
+#
+#  deploy:
+#    runs-on: self-hosted
+#    needs: [ build-and-push-image ]
+#    name: Deploy to cloud
+#    steps:
+#      - name: Add ssh key
+#        uses: webfactory/ssh-agent@v0.5.3
+#        with:
+#          ssh-private-key: ${{ secrets.AZURE_SECRET_KEY }}
+#
+#      - name: Create deployment folder
+#        run: ssh -o StrictHostKeyChecking=no ${{ secrets.AZURE_USERNAME }}@${{ secrets.AZURE_IP }} "mkdir -p ci-cd"
+#
+#      - name: Copy compose file
+#        run: scp docker-compose.yml ${{ secrets.AZURE_USERNAME }}@${{ secrets.AZURE_IP }}:ci-cd/docker-compose.yml
+#
+#      - name: Set ENV variable and deploy
+#        run: |
+#          ssh -o StrictHostKeyChecking=no ${{ secrets.AZURE_USERNAME }}@${{ secrets.AZURE_IP }} <<EOF
+#            cd ci-cd
+#            docker-compose -f docker-compose.yml pull -q
+#            docker-compose -f docker-compose.yml up -d
+#          EOF
